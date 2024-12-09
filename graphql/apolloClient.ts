@@ -33,6 +33,7 @@ const client = new ApolloClient({
   link: httpLink,
   cache: new InMemoryCache(),
   defaultOptions,
+  connectToDevTools: true,
 });
 
 export default client;

@@ -20,17 +20,16 @@ const defaultOptions: DefaultOptions = {
   },
 };
 
-const serverClient = new ApolloClient({
+export const serverClient = new ApolloClient({
   ssrMode: true,
   link: new HttpLink({
     uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
     headers: {
-      Authorization: `Apikey ${process.env.GRAPHQL_TOKEN}`,
+      Authorization: `apikey ${process.env.GRAPHQL_TOKEN}`,
     },
     fetch,
   }),
   cache: new InMemoryCache(),
   defaultOptions,
+  connectToDevTools: true,
 });
-
-export default serverClient;

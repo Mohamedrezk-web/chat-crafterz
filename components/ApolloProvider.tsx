@@ -1,4 +1,5 @@
-'user client';
+'use client';
+
 import client from '@/graphql/apolloClient';
 import { ApolloProvider } from '@apollo/client';
 import React from 'react';
