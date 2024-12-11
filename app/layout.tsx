@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
 import ApolloProviderWrapper from '@/components/ApolloProvider';
+import { Toaster } from '@/components/ui/sonner';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -33,6 +34,7 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gray-50 `}
           >
             {children}
+            <Toaster />
           </body>
         </html>
       </ClerkProvider>
