@@ -26,8 +26,6 @@ function CreateChatbot() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      console.log(`${new Date().toISOString().split('T')[0]} ${new Date().toTimeString().split(' ')[1]}`);
-
       const data = await addNewChatBot();
       setName('');
       router.push(`/edit-chatbot/${data.data.insertChatbots.id}`);
