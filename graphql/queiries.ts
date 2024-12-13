@@ -49,3 +49,42 @@ export const GET_CHATBOTS_BY_USER_ID = gql`
     }
   }
 `;
+
+export const GET_USER_CHATBOTS = gql`
+  query GetUserChatBots {
+    chatbotsList {
+      id
+      name
+      chat_sessions {
+        id
+        created_at
+        guests {
+          name
+          email
+        }
+      }
+    }
+  }
+`;
+
+export const GET_CHAT_SESSIONS_MESSAGES = gql`
+  query GetChatSessionsMessages($id: Int!) {
+    chat_sessions(id: $id) {
+      id
+      created_at
+      messages {
+        id
+        content
+        created_at
+        sender
+      }
+      chatbots {
+        name
+      }
+      guests {
+        name
+        email
+      }
+    }
+  }
+`;

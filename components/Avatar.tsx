@@ -1,10 +1,17 @@
 import React from 'react';
 import Image from 'next/image';
 import { createAvatar } from '@dicebear/core';
-import { bottts, botttsNeutral, rings, shapes } from '@dicebear/collection';
+import {
+  bottts,
+  botttsNeutral,
+  funEmoji,
+  personas,
+  rings,
+  shapes,
+} from '@dicebear/collection';
 
 function Avatar({ seed, className }: { seed: string; className?: string }) {
-  const avatar = createAvatar(botttsNeutral, {
+  const avatar = createAvatar(personas, {
     seed,
   });
   const svg = avatar.toString();
