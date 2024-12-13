@@ -127,7 +127,7 @@ function EditChatBot({ params }: { params: Promise<{ id: string }> }) {
 
   if (error) return <div>Error :{error.message}</div>;
 
-  if (!data.chatbots) return redirect('/create-chatbot');
+  if (!data.chatbots) return redirect('/view-chatbots');
 
   return (
     <div className='px-0 md:p-10'>

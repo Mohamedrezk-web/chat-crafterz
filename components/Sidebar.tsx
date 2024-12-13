@@ -21,7 +21,7 @@ function Sidebar() {
         <li className='flex-1'>
           <Link
             className='flex flex-col text-center items-center lg:text-left lg:flex-row gap-2 p-5 rounded-md hover:opacity-50 bg-blue-500'
-            href={'/view-chatbot'}
+            href={'/view-chatbots'}
           >
             <PencilIcon className='w-6 h-6 lg:w-8 lg:h-8' />
 
