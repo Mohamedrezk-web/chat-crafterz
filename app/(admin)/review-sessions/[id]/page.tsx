@@ -1,6 +1,7 @@
 import Messages from '@/components/Messages';
 import { GET_CHAT_SESSIONS_MESSAGES } from '@/graphql/queiries';
 import { serverClient } from '@/lib/server/serverClient';
+import { Params } from 'next/dist/server/request/params';
 import React from 'react';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,7 @@ type PageProps = {
     id: string;
   };
 };
-async function ReviewSession({ params }: PageProps) {
+async function ReviewSession({ params }: { params: Params }) {
   const { id } = params;
   const {
     data: {
@@ -23,7 +24,7 @@ async function ReviewSession({ params }: PageProps) {
     },
   } = await serverClient.query({
     query: GET_CHAT_SESSIONS_MESSAGES,
-    variables: { id: parseInt(id) },
+    variables: { id: parseInt(`${id}`) },
   });
 
   return (
