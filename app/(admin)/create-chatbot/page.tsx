@@ -18,7 +18,7 @@ function CreateChatbot() {
       variables: {
         clerk_user_id: user?.id,
         name,
-        created_at: `${new Date().toISOString().split('T')[0]}`,
+        created_at: `${new Date().toISOString()}`,
       },
     }
   );

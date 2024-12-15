@@ -66,7 +66,7 @@ function EditChatBot({ params }: { params: Promise<{ id: string }> }) {
         variables: {
           chatbot_id: parseInt(id),
           content,
-          created_at: `${new Date().toISOString().split('T')[0]}`,
+          created_at: `${new Date().toISOString()}`,
         },
       });
 
