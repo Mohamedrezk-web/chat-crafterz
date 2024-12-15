@@ -149,7 +149,7 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
             if (message['id'] === loadingMessage.id) {
               return {
                 ...message,
-                content: result.message,
+                content: result.content,
                 id: result.id,
               } as any;
             }
