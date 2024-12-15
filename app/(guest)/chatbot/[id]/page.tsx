@@ -1,6 +1,7 @@
 'use client';
 
 import Avatar from '@/components/Avatar';
+import Messages from '@/components/Messages';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,10 +19,21 @@ import {
 } from '@/graphql/queiries';
 import startNewChat from '@/lib/startNewChat';
 import { useQuery } from '@apollo/client';
-import { Bomb, CloudLightningIcon } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
+import { CloudLightningIcon } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { set, useForm } from 'react-hook-form';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+import { Content } from '@radix-ui/react-accordion';
+import { create } from 'domain';
 
+const formSchema = z.object({
+  message: z.string().min(2, 'Message must be at least 2 characters long'),
+});
 function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
+  const { user } = useUser();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [isOpen, setIsOpen] = useState(true);
@@ -32,6 +43,13 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
   const [unwrappedParams, setUnwrappedParams] = useState<{ id: string } | null>(
     null
   );
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      message: '',
+    },
+  });
 
   useEffect(() => {
     async function unwrapParams() {
@@ -72,8 +90,78 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
     setChatId(chatId);
   };
 
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setLoading(true);
+    const { message: formMessage } = values;
+
+    const message = formMessage;
+
+    form.reset();
+    if (!name || !email) {
+      setIsOpen(true);
+      setLoading(false);
+      return;
+    }
+
+    if (!message.trim()) {
+      return;
+    }
+
+    const userMessage = {
+      id: Date.now(),
+      content: message,
+      created_at: new Date().toISOString(),
+      sender: 'user',
+      chat_session_id: chatId,
+    };
+
+    const loadingMessage = {
+      id: Date.now() + 1,
+      content: 'Cooking...',
+      created_at: new Date().toISOString(),
+      sender: 'ai',
+      chat_session_id: chatId,
+    };
+
+    setMessages(
+      (messages) => [...messages, userMessage, loadingMessage] as any
+    );
+
+    try {
+      const response = await fetch('/api/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name,
+          chat_session_id: chatId,
+          chatbot_id: unwrappedParams?.id,
+          content: message,
+        }),
+      });
+
+      const result = await response.json();
+
+      setMessages(
+        (prevMessages) =>
+          prevMessages.map((message: any) => {
+            if (message['id'] === loadingMessage.id) {
+              return {
+                ...message,
+                content: result.message,
+                id: result.id,
+              } as any;
+            }
+            return message as any;
+          }) as any
+      );
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  }
   return (
-    <div className='w-full flex bg-gray-100'>
+    <div className='w-full flex bg-gray-100  h-screen justify-center'>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className='sm:max-w-[26rem]'>
           <form onSubmit={handleInfoSubmit}>
@@ -128,8 +216,8 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
           )}
         </DialogContent>
       </Dialog>
-      <div>
-        <div className='W-full pb-4 border-b top-0 z-50 bg-blue-500 py-5 px-10 text-white md:rounded-t-lg flex items-center space-x-4'>
+      <div className='w-full flex flex-col md:max-w-3xl'>
+        <div className='W-full pb-4 border-b top-0 z-50 bg-blue-500 py-5 px-10 text-white  flex items-center space-x-4'>
           <Avatar seed={chatBot?.chatbots?.name} className='rounded-full' />
           <div>
             <h1 className='truncate text-lg font-semibold'>
@@ -141,6 +229,31 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
             </p>
           </div>
         </div>
+        <Messages messages={messages} chatBotName={name} />
+
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className='flex items-start gap-2 lg:gap-4 w-full sticky bottom-0 z-50 bg-gray-100 p-5  drop-shadow-lg'
+          >
+            <FormField
+              control={form.control}
+              name='message'
+              render={({ field }) => (
+                <FormItem className='flex-1'>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder='Type a message'
+                      className=' border-none bg-gray-100'
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <Button type='submit'>Send</Button>
+          </form>
+        </Form>
       </div>
     </div>
   );

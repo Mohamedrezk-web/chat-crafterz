@@ -19,7 +19,7 @@ function Messages({ messages, chatBotName }: any) {
     }
   }, [messages]);
   return (
-    <div className='flex-1 flex flex-col overflow-y-auto space-y-10 py-10 px-5 bg-white rounded-lg'>
+    <div className='flex-1 flex flex-col overflow-y-auto space-y-10 py-10 px-5 bg-white '>
       {messages.map((message: any) => {
         const isSender = message.sender !== 'user';
         return (
@@ -39,7 +39,7 @@ function Messages({ messages, chatBotName }: any) {
                 <UserCircle className='text-primary-500' />
               )}
             </div>
-            <p
+            <div
               className={`chat-bubble text-white ${
                 isSender
                   ? 'chat-bubble-primary bg-primary-500'
@@ -52,7 +52,7 @@ function Messages({ messages, chatBotName }: any) {
               >
                 {message.content}
               </ReactMarkdown>
-            </p>
+            </div>
           </div>
         );
       })}
