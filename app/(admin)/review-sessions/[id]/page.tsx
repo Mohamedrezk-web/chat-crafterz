@@ -4,8 +4,13 @@ import { serverClient } from '@/lib/server/serverClient';
 import React from 'react';
 
 export const dynamic = 'force-dynamic';
-
-async function ReviewSession({ params: { id } }: { params: { id: string } }) {
+type PageProps = {
+  params: {
+    id: string;
+  };
+};
+async function ReviewSession({ params }: PageProps) {
+  const { id } = params;
   const {
     data: {
       chat_sessions: {

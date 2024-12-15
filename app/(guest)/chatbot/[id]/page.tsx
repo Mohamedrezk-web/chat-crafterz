@@ -24,10 +24,8 @@ import { CloudLightningIcon } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { set, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
-import { Content } from '@radix-ui/react-accordion';
-import { create } from 'domain';
 
 const formSchema = z.object({
   message: z.string().min(2, 'Message must be at least 2 characters long'),
