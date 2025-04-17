@@ -3,10 +3,17 @@ import { gql } from '@apollo/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin':
+    process.env.NEXT_PUBLIC_APP_URL || 'https://chat-crafterz.vercel.app',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers':
+    'Content-Type, Authorization, Apollo-Require-Preflight',
 };
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
   const { query, variables } = await request.json();
 
