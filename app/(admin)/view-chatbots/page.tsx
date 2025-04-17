@@ -21,8 +21,6 @@ async function ViewChatBots() {
     variables: { clerk_user_id: userId },
   });
 
-  console.log(userId, res);
-
   const sortedChatbots = data
     ? [...data.chatbotsList].sort(
         (a: any, b: any) =>

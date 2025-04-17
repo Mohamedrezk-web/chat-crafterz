@@ -69,14 +69,10 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    console.log('messages', messages);
-
     const openAiResponse = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: messages,
     });
-
-    console.log('openai response', openAiResponse);
 
     const aiResponse = openAiResponse?.choices?.[0]?.message?.content?.trim();
 

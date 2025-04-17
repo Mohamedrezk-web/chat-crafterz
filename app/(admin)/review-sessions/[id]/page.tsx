@@ -13,8 +13,6 @@ type Props = {
 export const dynamic = 'force-dynamic';
 
 async function ReviewSession({ params }: any) {
-  console.log(typeof params); // To check if it's inferred correctly
-
   const { id } = params;
 
   const {
