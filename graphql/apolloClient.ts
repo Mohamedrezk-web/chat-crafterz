@@ -12,6 +12,11 @@ export const BASE_URL =
 
 const httpLink = createHttpLink({
   uri: `${BASE_URL}/api/graphql`,
+  headers: {
+    'Access-Control-Allow-Origin':
+      process.env.NEXT_PUBLIC_APP_URL || 'https://chat-crafterz.vercel.app',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  },
 });
 
 const defaultOptions: DefaultOptions = {
