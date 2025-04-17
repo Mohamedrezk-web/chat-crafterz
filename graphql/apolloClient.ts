@@ -13,7 +13,7 @@ export const BASE_URL =
 const httpLink = createHttpLink({
   uri: `${BASE_URL}/api/graphql`,
   headers: {
-    Authorization: `apikey ${process.env.NEXT_PUBLIC_GRAPHQL_TOKEN}`,
+    Authorization: `apikey ${process.env.GRAPHQL_TOKEN}`,
   },
 });
 
