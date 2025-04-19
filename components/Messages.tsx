@@ -11,7 +11,7 @@ function Messages({ messages, chatBotName }: any) {
   const path = usePathname();
   const ref = useRef<HTMLDivElement>(null);
 
-  const isReviewSession = path.includes('/review-sessions');
+  const isReviewSession = path?.includes('/review-sessions');
 
   useEffect(() => {
     if (ref.current) {

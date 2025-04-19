@@ -13,10 +13,12 @@ export async function OPTIONS() {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const { userId } = await auth();
+
     if (!userId) {
       return errorResponse({ message: 'Unauthorized' }, 401);
     }
@@ -24,7 +26,7 @@ export async function DELETE(
     await connectToDatabase();
 
     // Find the characteristic first to get the chatbot_id
-    const characteristic = await ChatbotCharacteristic.findById(params.id);
+    const characteristic = await ChatbotCharacteristic.findById(id);
     if (!characteristic) {
       return errorResponse({ message: 'Characteristic not found' }, 404);
     }
@@ -40,7 +42,7 @@ export async function DELETE(
     }
 
     // Delete the characteristic
-    await ChatbotCharacteristic.findByIdAndDelete(params.id);
+    await ChatbotCharacteristic.findByIdAndDelete(id);
 
     return successResponse({ message: 'Characteristic deleted successfully' });
   } catch (error) {

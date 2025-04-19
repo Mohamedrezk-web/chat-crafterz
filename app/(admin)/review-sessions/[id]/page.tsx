@@ -4,11 +4,10 @@ import { ChatSession } from '@/models';
 import { Types } from 'mongoose';
 import React from 'react';
 
-// Use the correct props type
 type Props = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 interface IChatbot {
@@ -39,7 +38,7 @@ interface PopulatedChatSession {
 export const dynamic = 'force-dynamic';
 
 async function ReviewSession({ params }: Props) {
-  const { id } = params;
+  const { id } = React.use(params);
 
   await connectToDatabase();
 

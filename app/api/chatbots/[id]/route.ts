@@ -14,11 +14,10 @@ export async function OPTIONS() {
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Await params
-    const { id } = await Promise.resolve(context.params);
+    const { id } = await context.params;
 
     await connectToDatabase();
     const chatbot = await Chatbot.findById(id).populate('characteristics');
@@ -35,11 +34,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Await params
-    const { id } = await Promise.resolve(context.params);
+    const { id } = await context.params;
 
     const { userId } = await auth();
     if (!userId) {
@@ -71,11 +69,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Await params
-    const { id } = await Promise.resolve(context.params);
+    const { id } = await context.params;
 
     const { userId } = await auth();
     if (!userId) {

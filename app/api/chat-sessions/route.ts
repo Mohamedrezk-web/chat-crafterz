@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { ChatSession, Chatbot } from '@/models';
 import { chatSessionSchema } from '@/lib/validations';
 import {
@@ -19,7 +19,7 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return errorResponse({ message: 'Unauthorized' }, 401);
     }
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return errorResponse({ message: 'Unauthorized' }, 401);
     }
