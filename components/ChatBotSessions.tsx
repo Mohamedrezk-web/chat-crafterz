@@ -26,12 +26,12 @@ function ChatBotSessions({ chatbots }: any) {
     <div className='bg-white '>
       <Accordion type='single' collapsible>
         {sortedChatbots.map((chatbot: any) => {
-          const hasSessions = chatbot.chat_sessions.length > 0;
+          const hasSessions = chatbot.chat_sessions?.length > 0;
 
           return (
             <AccordionItem
-              key={chatbot.id}
-              value={`item-${chatbot.id.toString()}`}
+              key={chatbot._id}
+              value={`item-${chatbot._id.toString()}`}
               className='px-10 py-5'
             >
               {hasSessions ? (
@@ -45,16 +45,16 @@ function ChatBotSessions({ chatbots }: any) {
                       <div className='flex flex-1 justify-between space-x-4'>
                         <p>{chatbot.name}</p>
                         <p className='pr-4 font-bold text-right'>
-                          {chatbot.chat_sessions.length} sessions
+                          {chatbot.chat_sessions?.length || 0} sessions
                         </p>
                       </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className='space-y-5 p-5 bg-gray-100 rounded-md'>
-                    {chatbot.chat_sessions.map((session: any) => (
+                    {chatbot.chat_sessions?.map((session: any) => (
                       <Link
-                        href={`/review-sessions/${session.id}`}
-                        key={session.id}
+                        href={`/review-sessions/${session._id}`}
+                        key={session._id}
                         className='relative p-10 bg-blue-500 text-white rounded-md block'
                       >
                         <p className='text-lg font-bold'>

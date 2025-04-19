@@ -1,6 +1,7 @@
 import Messages from '@/components/Messages';
-import { GET_CHAT_SESSIONS_MESSAGES } from '@/graphql/queiries';
-import { serverClient } from '@/lib/server/serverClient';
+import connectToDatabase from '@/lib/mongodb';
+import { ChatSession } from '@/models';
+import { Types } from 'mongoose';
 import React from 'react';
 
 // Use the correct props type
@@ -10,42 +11,70 @@ type Props = {
   };
 };
 
+interface IChatbot {
+  _id: Types.ObjectId;
+  name: string;
+}
+
+interface IGuest {
+  _id: Types.ObjectId;
+  name: string;
+  email: string;
+}
+
+interface IMessage {
+  _id: Types.ObjectId;
+  content: string;
+  sender: string;
+}
+
+interface PopulatedChatSession {
+  _id: Types.ObjectId;
+  messages: IMessage[];
+  created_at: Date;
+  chatbot: IChatbot;
+  guest: IGuest;
+}
+
 export const dynamic = 'force-dynamic';
 
-async function ReviewSession({ params }: any) {
+async function ReviewSession({ params }: Props) {
   const { id } = params;
 
-  const {
-    data: {
-      chat_sessions: {
-        id: chatSessionId,
-        messages,
-        created_at,
-        chatbots: { name },
-        guests: { name: guestName, email },
-      },
-    },
-  } = await serverClient.query({
-    query: GET_CHAT_SESSIONS_MESSAGES,
-    variables: { id: parseInt(id, 10) }, // Ensure ID is parsed as an integer
-  });
+  await connectToDatabase();
+
+  const chatSessionDoc = await ChatSession.findById(id)
+    .populate('chatbot')
+    .populate('guest')
+    .populate('messages');
+
+  if (!chatSessionDoc) {
+    throw new Error('Chat session not found');
+  }
+
+  // Serialize the MongoDB document to a plain JavaScript object
+  const chatSession = JSON.parse(
+    JSON.stringify(chatSessionDoc)
+  ) as PopulatedChatSession;
+
+  const { messages, created_at, chatbot, guest } = chatSession;
 
   return (
     <div className='flex-1 p-10 pb-24'>
       <h1 className='text-xl lg:text-3xl font-semibold'>Session Review</h1>
       <p>Started at {new Date(created_at).toLocaleString()}</p>
       <h2 className='font-light mt-2'>
-        Between {name} &{' '}
+        Between {chatbot.name} &{' '}
         <span className='font-extrabold'>
-          {guestName} ({email})
+          {guest.name} ({guest.email})
         </span>
       </h2>
       <hr className='my-10' />
       <Messages
         messages={messages}
-        chatSessionId={chatSessionId}
-        chatBotName={name}
-        guestName={guestName}
+        chatSessionId={chatSession._id.toString()}
+        chatBotName={chatbot.name}
+        guestName={guest.name}
       />
     </div>
   );

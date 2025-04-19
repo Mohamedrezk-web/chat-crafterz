@@ -1,58 +1,64 @@
-import { INSERT_MESSAGE } from '@/graphql/mutations';
-import {
-  GET_CHATBOT_BY_ID,
-  GET_MESSAGE_BY_CHAT_SESSION_ID,
-} from '@/graphql/queiries';
-import { serverClient } from '@/lib/server/serverClient';
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 import { ChatCompletionMessage } from 'openai/resources/index.mjs';
+import { Message, ChatSession, Chatbot, ChatbotCharacteristic } from '@/models';
+import connectToDatabase from '@/lib/mongodb';
+import { Types } from 'mongoose';
+
+interface IChatbotCharacteristic {
+  content: string;
+}
+
+interface IChatbot {
+  characteristics: IChatbotCharacteristic[];
+}
+
+type Role = 'system' | 'user' | 'assistant';
+
+interface ChatMessage {
+  role: Role;
+  content: string;
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
 export async function POST(request: NextRequest) {
   const { chat_session_id, chatbot_id, content, name } = await request.json();
 
   try {
-    const { data } = await serverClient.query({
-      query: GET_CHATBOT_BY_ID,
-      variables: {
-        id: chatbot_id,
-      },
-    });
+    // Connect to database
+    await connectToDatabase();
 
-    const chatbot = data.chatbots;
+    // Find chatbot and its characteristics
+    const chatbot = (await Chatbot.findById(chatbot_id).populate(
+      'characteristics'
+    )) as unknown as IChatbot;
 
     if (!chatbot) {
-      return NextResponse.json('Chatbot not found', { status: 404 });
+      return NextResponse.json({ error: 'Chatbot not found' }, { status: 404 });
     }
 
-    const { data: messagesData } = await serverClient.query({
-      query: GET_MESSAGE_BY_CHAT_SESSION_ID,
-      variables: {
-        id: chat_session_id,
-      },
-      fetchPolicy: 'no-cache',
-    });
+    // Get previous messages
+    const previousMessages = await Message.find({
+      chat_session_id: new Types.ObjectId(chat_session_id),
+    }).sort({ created_at: 1 });
 
-    const previousMessages =
-      messagesData.messagesUsingMessages_chat_session_id_fkey;
+    const formattedMessages: ChatMessage[] = previousMessages.map(
+      (message) => ({
+        role: message.sender === 'user' ? 'user' : 'assistant',
+        content: message.content,
+      })
+    );
 
-    const formattedMessages = previousMessages.map((message: any) => ({
-      role: message.sender === 'user' ? 'user' : 'system',
-      name: message.sender === 'user' ? name : 'system',
-      content: message.content,
-    }));
-
-    const systemPrompt = chatbot.chatbot_characteristics
-      .map((characteristic: any) => characteristic.content)
+    const systemPrompt = chatbot.characteristics
+      .map((characteristic) => characteristic.content)
       .join(' + ');
 
-    const messages: ChatCompletionMessage[] = [
+    const messages: ChatMessage[] = [
       {
         role: 'system',
-        name: 'system',
         content: `
             you are a helpful assistant talking to ${name}.
             if a generic question is asked which is not relevant or in the same scope or domain as the points mentioned in the key information section, 
@@ -64,47 +70,49 @@ export async function POST(request: NextRequest) {
       ...formattedMessages,
       {
         role: 'user',
-        name: name.replace(/[^a-zA-Z0-9_-]/g, ''),
         content: content,
       },
     ];
 
     const openAiResponse = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: messages,
+      messages: messages as ChatCompletionMessage[],
     });
 
     const aiResponse = openAiResponse?.choices?.[0]?.message?.content?.trim();
 
     if (!aiResponse) {
-      return NextResponse.json('Failed to send message', { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to get AI response' },
+        { status: 500 }
+      );
     }
 
-    await serverClient.mutate({
-      mutation: INSERT_MESSAGE,
-      variables: {
-        chat_session_id,
-        content,
-        sender: 'user',
-        created_at: new Date().toISOString(),
-      },
+    // Save user message
+    await Message.create({
+      chat_session_id: new Types.ObjectId(chat_session_id),
+      content,
+      sender: 'user',
+      created_at: new Date(),
     });
 
-    const aiMessageResults = await serverClient.mutate({
-      mutation: INSERT_MESSAGE,
-      variables: {
-        chat_session_id,
-        content: aiResponse,
-        sender: 'ai',
-        created_at: new Date().toISOString(),
-      },
+    // Save AI message
+    const aiMessage = await Message.create({
+      chat_session_id: new Types.ObjectId(chat_session_id),
+      content: aiResponse,
+      sender: 'ai',
+      created_at: new Date(),
     });
+
     return NextResponse.json(
-      { id: aiMessageResults.data.insertMessages.id, content: aiResponse },
+      { id: (aiMessage as any)._id.toString(), content: aiResponse },
       { status: 200 }
     );
   } catch (error) {
-    console.error(error);
-    return NextResponse.json('Failed to send message', { status: 500 });
+    console.error('Error in send-message:', error);
+    return NextResponse.json(
+      { error: 'Failed to send message' },
+      { status: 500 }
+    );
   }
 }

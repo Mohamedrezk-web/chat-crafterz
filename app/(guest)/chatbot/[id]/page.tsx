@@ -13,12 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  GET_CHATBOT_BY_ID,
-  GET_MESSAGE_BY_CHAT_SESSION_ID,
-} from '@/graphql/queiries';
 import startNewChat from '@/lib/startNewChat';
-import { useQuery } from '@apollo/client';
 import { useUser } from '@clerk/nextjs';
 import { CloudLightningIcon } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
@@ -30,6 +25,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 const formSchema = z.object({
   message: z.string().min(2, 'Message must be at least 2 characters long'),
 });
+
 function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useUser();
   const [name, setName] = useState('');
@@ -38,6 +34,7 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
   const [chatId, setChatId] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [chatBot, setChatBot] = useState<any>(null);
   const [unwrappedParams, setUnwrappedParams] = useState<{ id: string } | null>(
     null
   );
@@ -53,27 +50,45 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
     async function unwrapParams() {
       const resolvedParams = await params;
       setUnwrappedParams(resolvedParams);
-      //   setChatId(resolvedParams.id);
     }
     unwrapParams();
   }, [params]);
 
-  const { data: chatBot } = useQuery(GET_CHATBOT_BY_ID, {
-    variables: {
-      id: unwrappedParams?.id,
-    },
-  });
-  const { data } = useQuery(GET_MESSAGE_BY_CHAT_SESSION_ID, {
-    variables: {
-      id: chatId,
-    },
-    skip: !chatId,
-  });
-
+  // Fetch chatbot data
   useEffect(() => {
-    if (!data) return;
-    setMessages(data.messagesUsingMessages_chat_session_id_fkey);
-  }, [data]);
+    async function fetchChatbot() {
+      if (!unwrappedParams?.id) return;
+      try {
+        const response = await fetch(`/api/chatbots/${unwrappedParams.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch chatbot');
+        }
+        const { data } = await response.json();
+        setChatBot(data);
+      } catch (error) {
+        console.error('Error fetching chatbot:', error);
+      }
+    }
+    fetchChatbot();
+  }, [unwrappedParams?.id]);
+
+  // Fetch messages
+  useEffect(() => {
+    async function fetchMessages() {
+      if (!chatId) return;
+      try {
+        const response = await fetch(`/api/messages?chatSessionId=${chatId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch messages');
+        }
+        const { data } = await response.json();
+        setMessages(data);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    }
+    fetchMessages();
+  }, [chatId]);
 
   if (!unwrappedParams) {
     return <p>Loading...</p>;
@@ -84,8 +99,19 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
     setLoading(true);
     setIsOpen(false);
 
-    const chatId = await startNewChat(unwrappedParams.id, name, email);
-    setChatId(chatId);
+    try {
+      const { chatSessionId } = await startNewChat(
+        unwrappedParams.id,
+        name,
+        email
+      );
+      setChatId(chatSessionId);
+    } catch (error) {
+      console.error('Error starting chat:', error);
+      setIsOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -156,15 +182,18 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
       );
     } catch (error) {
       console.error('Error sending message:', error);
+    } finally {
+      setLoading(false);
     }
   }
+
   return (
     <div className='w-full flex bg-gray-100  h-screen justify-center'>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className='sm:max-w-[26rem]'>
           <form onSubmit={handleInfoSubmit}>
             <DialogHeader>
-              <DialogTitle>Chat with {name}</DialogTitle>
+              <DialogTitle>Chat with {chatBot?.name}</DialogTitle>
               <DialogDescription>
                 Enter your name and email to start a conversation with the chat
                 bot.
@@ -216,10 +245,10 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
       </Dialog>
       <div className='w-full flex flex-col md:max-w-3xl'>
         <div className='W-full pb-4 border-b top-0 z-50 bg-blue-500 py-5 px-10 text-white  flex items-center space-x-4'>
-          <Avatar seed={chatBot?.chatbots?.name} className='rounded-full' />
+          <Avatar seed={chatBot?.name} className='rounded-full' />
           <div>
             <h1 className='truncate text-lg font-semibold'>
-              Chat with {chatBot?.chatbots?.name}
+              Chat with {chatBot?.name}
             </h1>
             <p className='flex gap-1'>
               <CloudLightningIcon className='w-6 h-6' />
@@ -243,13 +272,20 @@ function ChatBotPage({ params }: { params: Promise<{ id: string }> }) {
                     <Input
                       {...field}
                       placeholder='Type a message'
-                      className=' border-none bg-gray-100'
+                      className='border-none bg-gray-100'
                     />
                   </FormControl>
                 </FormItem>
               )}
             />
-            <Button type='submit'>Send</Button>
+            <Button
+              type='submit'
+              size='sm'
+              disabled={loading}
+              className='bg-blue-500'
+            >
+              Send
+            </Button>
           </form>
         </Form>
       </div>

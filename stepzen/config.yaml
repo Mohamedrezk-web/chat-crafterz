@@ -1,4 +1,0 @@
-configurationset:
-  - configuration:
-      name: postgresql_config
-      uri: postgresql://ep-wandering-sound-a2dw6d0e.eu-central-1.aws.neon.tech/crafterzdb?user=crafterzdb_owner&password=h6RvOt4xaKyn

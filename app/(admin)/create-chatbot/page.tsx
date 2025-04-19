@@ -2,37 +2,46 @@
 import Avatar from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CREATE_CHATBOT } from '@/graphql/mutations';
-import { gql, useMutation } from '@apollo/client';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 function CreateChatbot() {
   const { user } = useUser();
   const router = useRouter();
   const [name, setName] = useState('');
-  const [addNewChatBot, { data, loading, error }] = useMutation(
-    CREATE_CHATBOT,
-    {
-      variables: {
-        clerk_user_id: user?.id,
-        name,
-        created_at: `${new Date().toISOString()}`,
-      },
-    }
-  );
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
-      const data = await addNewChatBot();
+      const response = await fetch('/api/chatbots', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create chatbot');
+      }
+
+      const { data } = await response.json();
       setName('');
-      router.push(`/edit-chatbot/${data.data.insertChatbots.id}`);
+      router.push(`/edit-chatbot/${data._id}`);
+      toast.success('Chatbot created successfully');
     } catch (err) {
       console.error(err);
+      toast.error('Failed to create chatbot');
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <div className='flex flex-col items-center justify-center md:flex-row md:space-x-10 bg-white rounded-md p-10 m-10'>
       <Avatar seed='Create Chat Bot' className='rounded-full' />

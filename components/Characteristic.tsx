@@ -1,6 +1,4 @@
 'use client';
-import { REMOVE_CHARACTERISTIC } from '@/graphql/mutations';
-import { useMutation } from '@apollo/client';
 import { OctagonX } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
@@ -8,18 +6,28 @@ import { toast } from 'sonner';
 function Characteristic({ characteristic }: { characteristic: any }) {
   const handleRemoveCharacteristic = async () => {
     try {
-      await removeCharacteristic({
-        variables: {
-          id: characteristic.id,
-        },
-      });
+      const response = await fetch(
+        `/api/chatbot-characteristics/${characteristic._id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to remove characteristic');
+      }
+
+      // Refresh the page to show updated data
+      window.location.reload();
     } catch (err) {
       console.error(err);
+      throw err;
     }
   };
-  const [removeCharacteristic] = useMutation(REMOVE_CHARACTERISTIC, {
-    refetchQueries: ['GetChatBotById'],
-  });
+
   return (
     <li className='relative p-10 bg-white border border-gray-200 rounded-lg shadow'>
       {characteristic.content}

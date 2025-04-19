@@ -1,0 +1,109 @@
+{
+  "entities": {
+    "Chatbots": {
+      "fields": {
+        "id": "Int (Primary Key)",
+        "name": "String",
+        "clerk_user_id": "String",
+        "created_at": "DateTime"
+      },
+      "relationships": {
+        "chat_sessions": "One-to-Many",
+        "chatbot_characteristics": "One-to-Many"
+      },
+      "operations": {
+        "queries": ["chatbots(id: Int!): Chatbots", "chatbotsList: [Chatbots]"],
+        "mutations": [
+          "insertChatbots(name: String!, clerk_user_id: String!, created_at: DateTime!)",
+          "updateChatbots(id: Int!, name: String, clerk_user_id: String, created_at: DateTime)",
+          "deleteChatbots(id: Int!)"
+        ]
+      }
+    },
+    "ChatSessions": {
+      "fields": {
+        "id": "Int (Primary Key)",
+        "chatbot_id": "Int (Foreign Key)",
+        "guest_id": "Int (Foreign Key)",
+        "created_at": "DateTime"
+      },
+      "relationships": {
+        "chatbot": "Many-to-One",
+        "guest": "Many-to-One",
+        "messages": "One-to-Many"
+      },
+      "operations": {
+        "queries": [
+          "chat_sessions(id: Int!): Chat_sessions",
+          "chat_sessionsList: [Chat_sessions]"
+        ],
+        "mutations": [
+          "insertChat_sessions(chatbot_id: Int!, guest_id: Int, created_at: DateTime!)",
+          "updateChat_sessions(id: Int!, chatbot_id: Int, guest_id: Int, created_at: DateTime)",
+          "deleteChat_sessions(id: Int!)"
+        ]
+      }
+    },
+    "Messages": {
+      "fields": {
+        "id": "Int (Primary Key)",
+        "chat_session_id": "Int (Foreign Key)",
+        "content": "String",
+        "sender": "String",
+        "created_at": "DateTime"
+      },
+      "relationships": {
+        "chat_session": "Many-to-One"
+      },
+      "operations": {
+        "queries": ["messages(id: Int!): Messages", "messagesList: [Messages]"],
+        "mutations": [
+          "insertMessages(chat_session_id: Int!, content: String!, sender: String!, created_at: DateTime!)",
+          "updateMessages(id: Int!, chat_session_id: Int, content: String, sender: String, created_at: DateTime)",
+          "deleteMessages(id: Int!)"
+        ]
+      }
+    },
+    "Guests": {
+      "fields": {
+        "id": "Int (Primary Key)",
+        "name": "String",
+        "email": "String",
+        "created_at": "DateTime"
+      },
+      "relationships": {
+        "chat_sessions": "One-to-Many"
+      },
+      "operations": {
+        "queries": ["guests(id: Int!): Guests", "guestsList: [Guests]"],
+        "mutations": [
+          "insertGuests(name: String!, email: String!, created_at: DateTime!)",
+          "updateGuests(id: Int!, name: String, email: String, created_at: DateTime)",
+          "deleteGuests(id: Int!)"
+        ]
+      }
+    },
+    "ChatbotCharacteristics": {
+      "fields": {
+        "id": "Int (Primary Key)",
+        "chatbot_id": "Int (Foreign Key)",
+        "content": "String",
+        "created_at": "DateTime"
+      },
+      "relationships": {
+        "chatbot": "Many-to-One"
+      },
+      "operations": {
+        "queries": [
+          "chatbot_characteristics(id: Int!): Chatbot_characteristics",
+          "chatbot_characteristicsList: [Chatbot_characteristics]"
+        ],
+        "mutations": [
+          "insertChatbot_characteristics(chatbot_id: Int!, content: String!, created_at: DateTime!)",
+          "updateChatbot_characteristics(id: Int!, chatbot_id: Int, content: String, created_at: DateTime)",
+          "deleteChatbot_characteristics(id: Int!)"
+        ]
+      }
+    }
+  }
+}
